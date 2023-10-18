@@ -112,6 +112,8 @@ payload(void)
                   return;
                }
 
+               val_print(ACS_PRINT_ERR, "\n    BDF is %x    ", bdf);
+               val_print(ACS_PRINT_ERR, "\n    Vendor ID %x    ", data);
                /* Access the config space, if device ID and vendor ID are valid */
                if (data != PCIE_UNKNOWN_RESPONSE)
                {
@@ -136,6 +138,7 @@ payload(void)
                   device ID and vendor ID are all FF's */
                else{
                   val_pcie_read_cfg(bdf, PCIE_ECAP_START, &data);
+                  val_print(ACS_PRINT_ERR, "\n   PCIE_ECAP_START data %x    ", data);
 
                   /* Returned data must be FF's, otherwise the test must fail */
                   if (data != PCIE_UNKNOWN_RESPONSE) {
@@ -147,6 +150,7 @@ payload(void)
 
                   val_pcie_read_cfg(bdf, PCIE_ECAP_END, &data);
 
+                  val_print(ACS_PRINT_ERR, "\n   PCIE_ECAP_END data %x    ", data);
                   /* Returned data must be FF's, otherwise the test must fail */
                   if (data != PCIE_UNKNOWN_RESPONSE) {
                      val_print(ACS_PRINT_ERR, "\n      Incorrect data for Bdf 0x%x    ", bdf);

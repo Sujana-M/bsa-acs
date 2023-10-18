@@ -154,6 +154,7 @@ payload(void)
         if (read_value == 0)
           continue;
 
+        val_print(ACS_PRINT_DEBUG, "\n   value of TYPE1_NP_MEM 0x%x", read_value);
         mem_base = (read_value & MEM_BA_MASK) << MEM_BA_SHIFT;
         mem_lim = (read_value & MEM_LIM_MASK) | MEM_LIM_LOWER_BITS;
 
@@ -226,9 +227,11 @@ payload(void)
            mem_base = mem_base | (mem_base  >> 16);
            val_pcie_write_cfg(bdf, TYPE1_NP_MEM, mem_base);
            val_pcie_read_cfg(bdf, TYPE1_NP_MEM, &read_value);
+           val_print(ACS_PRINT_DEBUG, "\n   Updated value of TYPE1_NP_MEM 0x%x", read_value);
 
            val_pcie_bar_mem_read(bdf, new_mem_lim + MEM_OFFSET_SMALL, &value);
-           val_print(ACS_PRINT_DEBUG, "  Value read is 0x%llx", value);
+           val_print(ACS_PRINT_DEBUG, "\n  Value read from 0x%llx", new_mem_lim + MEM_OFFSET_SMALL);
+           val_print(ACS_PRINT_DEBUG, "  is 0x%llx", value);
            if (value != PCIE_UNKNOWN_RESPONSE)
            {
                val_print(ACS_PRINT_ERR, "\n       Memory range for bdf 0x%x", bdf);
@@ -240,11 +243,14 @@ payload(void)
         }
 
 exception_return:
+        val_print(ACS_PRINT_DEBUG, "\n  In exception return", 0);
         /*Write back original value */
         if ((mem_lim >> MEM_SHIFT) > (ori_mem_base >> MEM_SHIFT))
         {
             val_pcie_write_cfg(bdf, TYPE1_NP_MEM,
                                            ((mem_lim & MEM_LIM_MASK) | (ori_mem_base  >> 16)));
+           val_pcie_read_cfg(bdf, TYPE1_NP_MEM, &read_value);
+           val_print(ACS_PRINT_DEBUG, "\n   Restored value of TYPE1_NP_MEM 0x%x", read_value);
         }
 
         /* Memory Space might have constraint on RW/RO behaviour

@@ -60,6 +60,8 @@ check_bdf_under_rp(uint32_t rp_bdf)
   rp_sec_bus = ((reg_value >> SECBN_SHIFT) & SECBN_MASK);
   rp_sub_bus = ((reg_value >> SUBBN_SHIFT) & SUBBN_MASK);
 
+  val_print(ACS_PRINT_DEBUG, "\n      RP Secondary bus 0x%x", rp_sec_bus);
+  val_print(ACS_PRINT_DEBUG, "\n      RP Subordinate bus 0x%x", rp_sub_bus);
   for (dev_sec_bus = rp_sec_bus; dev_sec_bus <= rp_sub_bus; dev_sec_bus++)
   {
       for (dev_num = 0; dev_num < PCIE_MAX_DEV; dev_num++)
@@ -71,6 +73,9 @@ check_bdf_under_rp(uint32_t rp_bdf)
               if (reg_value == PCIE_UNKNOWN_RESPONSE)
                   continue;
 
+              val_print(ACS_PRINT_DEBUG, "\n       Dev BDF  0x%x", dev_bdf);
+              val_pcie_read_cfg(dev_bdf, TYPE01_RIDR, &reg_value);
+              val_print(ACS_PRINT_DEBUG, "\n       Class code is 0x%x", reg_value);
               dev_bus = PCIE_EXTRACT_BDF_BUS(dev_bdf);
               dev_seg = PCIE_EXTRACT_BDF_SEG(dev_bdf);
               if ((dev_seg == rp_seg) && ((dev_bus >= rp_sec_bus) && (dev_bus <= rp_sub_bus)))
@@ -141,16 +146,21 @@ payload(void)
 
       if (dp_type == RP)
       {
+        val_print(ACS_PRINT_DEBUG, "\n       BDF is 0x%x", bdf);
         /* Part 1:
          * Check When Address is within the Range of Non-Prefetchable
          * Memory Range.
         */
         /* Clearing UR in Device Status Register */
+        val_print(ACS_PRINT_DEBUG, "\n  Clear URD", 0);
         val_pcie_clear_urd(bdf);
+        val_print(ACS_PRINT_DEBUG, "\n  Cleared URD", 0);
+
+        val_pcie_read_cfg(bdf, TYPE1_PBN, &read_value);
+        val_print(ACS_PRINT_DEBUG, "\n  Bus range is 0x%x", read_value);
 
         /* Read Function's NP Memory Base Limit Register */
         val_pcie_read_cfg(bdf, TYPE1_NP_MEM, &read_value);
-        val_print(ACS_PRINT_DEBUG, "\n       BDF is 0x%x", bdf);
         if (read_value == 0)
           continue;
 

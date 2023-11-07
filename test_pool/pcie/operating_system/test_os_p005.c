@@ -93,6 +93,23 @@ check_bdf_under_rp(uint32_t rp_bdf)
    return 0;
 }
 
+static void listbdf()
+{
+  pcie_device_bdf_table *bdf_tbl_ptr;
+  uint32_t tbl_index = 0;
+  uint32_t bdf, reg_value;
+
+  bdf_tbl_ptr = val_pcie_bdf_table_ptr();
+  while (tbl_index < bdf_tbl_ptr->num_entries)
+  {
+      bdf = bdf_tbl_ptr->device[tbl_index++].bdf;
+      val_pcie_read_cfg(bdf, TYPE01_VIDR, &reg_value);
+      /* Return if there is a bdf mapping issue */
+      val_print(ACS_PRINT_ERR, "\n          BDF 0x%x ", bdf);
+      val_print(ACS_PRINT_ERR, " Vendor ID  0x%x ", reg_value);
+  }
+}
+
 static
 void
 payload(void)
@@ -133,11 +150,37 @@ payload(void)
   */
   while (tbl_index < bdf_tbl_ptr->num_entries)
   {
+      val_print(ACS_PRINT_ERR, "\n    BDF is %x ", bdf);
       bdf = bdf_tbl_ptr->device[tbl_index++].bdf;
       /* Enable Bus Master Enable */
       val_pcie_enable_bme(bdf);
       /* Enable Memory Space Access */
       val_pcie_enable_msa(bdf);
+      if (val_pcie_device_port_type(bdf) == RP) {
+        val_pcie_read_cfg(bdf, 0x20, &new_value);
+        val_print(ACS_PRINT_DEBUG, "\n  RP 0x20 value %x ", new_value);
+        val_pcie_read_cfg(bdf, 0x24, &new_value);
+        val_print(ACS_PRINT_DEBUG, "\n  RP 0x24 value %x ", new_value);
+        val_pcie_read_cfg(bdf, 0x28, &new_value);
+        val_print(ACS_PRINT_DEBUG, "\n  RP 0x28 value %x ", new_value);
+        val_pcie_read_cfg(bdf, 0x2C, &new_value);
+        val_print(ACS_PRINT_DEBUG, "\n  RP 0x2C value %x ", new_value);
+      }
+      else {
+        val_pcie_read_cfg(bdf, 0x10, &new_value);
+        val_print(ACS_PRINT_DEBUG, "\n  EP 0x10 value %x ", new_value);
+        val_pcie_read_cfg(bdf, 0x14, &new_value);
+        val_print(ACS_PRINT_DEBUG, "\n  EP 0x14 value %x ", new_value);
+        val_pcie_read_cfg(bdf, 0x18, &new_value);
+        val_print(ACS_PRINT_DEBUG, "\n  EP 0x18 value %x ", new_value);
+        val_pcie_read_cfg(bdf, 0x1C, &new_value);
+        val_print(ACS_PRINT_DEBUG, "\n  EP 0x1C value %x ", new_value);
+        val_pcie_read_cfg(bdf, 0x20, &new_value);
+        val_print(ACS_PRINT_DEBUG, "\n  EP 0x20 value %x ", new_value);
+        val_pcie_read_cfg(bdf, 0x24, &new_value);
+        val_print(ACS_PRINT_DEBUG, "\n  EP 0x24 value %x ", new_value);
+
+      }
   }
 
   tbl_index = 0;
@@ -213,9 +256,23 @@ payload(void)
             return;
         }
 
+        val_print(ACS_PRINT_DEBUG, "\n  Check 1 starts", 0);
+	listbdf();
+        val_pcie_read_cfg(bdf, 0x04, &new_value);
+        val_print(ACS_PRINT_DEBUG, "\n  RP 0x04 value %x ", new_value);
+        val_pcie_read_cfg(bdf, 0x1C, &new_value);
+        val_print(ACS_PRINT_DEBUG, "\n  RP 0x1C value %x ", new_value);
         val_pcie_bar_mem_read(bdf, mem_base + mem_offset, &old_value);
         val_pcie_bar_mem_write(bdf, mem_base + mem_offset, KNOWN_DATA);
         val_pcie_bar_mem_read(bdf, mem_base + mem_offset, &read_value);
+
+        val_pcie_read_cfg(bdf, 0x04, &new_value);
+        val_print(ACS_PRINT_DEBUG, "\n  RP 0x04 value %x ", new_value);
+        val_pcie_read_cfg(bdf, 0x1C, &new_value);
+        val_print(ACS_PRINT_DEBUG, "\n  RP 0x1C value %x ", new_value);
+
+        val_print(ACS_PRINT_DEBUG, "\n  Check 1 ends", 0);
+	listbdf();
 
         if ((old_value != read_value && read_value == PCIE_UNKNOWN_RESPONSE) ||
              val_pcie_is_urd(bdf)) {

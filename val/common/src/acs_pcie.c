@@ -18,7 +18,7 @@
 #include "common/include/acs_val.h"
 #include "common/include/acs_common.h"
 #include "common/include/acs_pcie_enumeration.h"
-
+#include "common/include/acs_memory.h"
 #include "common/include/val_interface.h"
 #include "common/include/acs_pcie.h"
 #include "common/sys_arch_src/pcie/pcie.h"
@@ -161,6 +161,7 @@ val_pcie_write_cfg(uint32_t bdf, uint32_t offset, uint32_t data)
                (dev * PCIE_MAX_FUNC * 4096) + (func * 4096);
 
   pal_mmio_write(ecam_base + cfg_addr + offset, data);
+  val_mem_issue_dsb();
 }
 
 /**
